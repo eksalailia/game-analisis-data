@@ -296,6 +296,7 @@ let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 let sudahKirim = false;
 
+// GANTI URL DI BAWAH INI DENGAN URL WEB APP ANDA
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
 
 // ========== NORMALISASI & CEK JAWABAN ==========
@@ -335,6 +336,7 @@ function startQuiz() {
   document.getElementById('info-kelas').textContent = kelasSiswa;
   document.getElementById('info-absen').textContent = absenSiswa;
 
+  // Acak soal
   soalAcak = [...BANK_SOAL].sort(() => Math.random() - 0.5);
   jawabanUser = new Array(soalAcak.length).fill(null);
   currentIndex = 0;
@@ -501,4 +503,4 @@ function kirimKeSheet(benar, nilai) {
 
   if (sudahKirim) {
     statusEl.className = 'send-status success';
-    statusEl.textContent = '✅ Nil
+    statusEl.textContent = '
