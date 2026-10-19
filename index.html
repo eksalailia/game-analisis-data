@@ -292,6 +292,7 @@ let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 
+// URL Google Apps Script — GANTI jika deploy ulang
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
 
 // ========== NORMALISASI & CEK JAWABAN ==========
@@ -485,19 +486,32 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ========== KIRIM KE GOOGLE SHEETS (FIXED) ==========
+// ========== KIRIM KE GOOGLE SHEETS (FINAL FIX) ==========
 function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
-  statusEl.className = 'send-status sending';
-  statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
 
-  // ✅ FIX: cek hanya placeholder, bukan includes URL panjang
-  if (!WEB_APP_URL || WEB_APP_URL === "" || WEB_APP_URL.indexOf("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec") !== -1) {
+  // ✅ FIX: cek hanya kosong & format, TIDAK pakai includes() URL
+  if (!WEB_APP_URL || WEB_APP_URL.trim() === "") {
     statusEl.className = 'send-status error';
-    statusEl.textContent = '⚠️ URL Google Apps Script belum diisi.';
+    statusEl.textContent = '⚠️ URL Google Apps Script kosong. Isi dulu di kode HTML.';
     return;
   }
+
+  if (!WEB_APP_URL.startsWith("https://script.google.com/macros/s/")) {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '⚠️ URL tidak valid. Harus diawali https://script.google.com/macros/s/';
+    return;
+  }
+
+  if (!WEB_APP_URL.endsWith("/exec")) {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '⚠️ URL harus diakhiri /exec (bukan /dev).';
+    return;
+  }
+
+  statusEl.className = 'send-status sending';
+  statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
 
   const formData = new URLSearchParams();
   formData.append('nama', namaSiswa);
