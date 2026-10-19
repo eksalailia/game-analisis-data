@@ -150,12 +150,12 @@
       <input type="text" id="input-name" placeholder="Masukkan nama kamu">
     </div>
     <div class="input-group">
-      <label>Kelas</label>
-      <input type="text" id="input-class" placeholder="Contoh: 7A">
+      <label>Absen</label>
+      <input type="number" id="input-absen" placeholder="Contoh: 15" min="1">
     </div>
     <div class="input-group">
-      <label>Nomor Absen</label>
-      <input type="number" id="input-absen" placeholder="Contoh: 15" min="1">
+      <label>Kelas</label>
+      <input type="text" id="input-class" placeholder="Contoh: 7A">
     </div>
 
     <button onclick="startQuiz()">🚀 Mulai Kuis</button>
@@ -165,8 +165,8 @@
   <div id="screen-quiz" class="screen">
     <div class="identitas-bar">
       <span>👤 <span id="info-nama"></span></span>
-      <span>🏫 <span id="info-kelas"></span></span>
       <span>🔢 Absen <span id="info-absen"></span></span>
+      <span>🏫 <span id="info-kelas"></span></span>
     </div>
     <div class="header-info">
       <div>Soal <b id="q-current">1</b> / 25</div>
@@ -229,8 +229,8 @@ let soalAcak = [];
 let jawabanUser = [];
 let currentIndex = 0;
 let namaSiswa = "";
-let kelasSiswa = "";
 let absenSiswa = "";
+let kelasSiswa = "";
 let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
@@ -241,11 +241,11 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6
 // ========== FUNGSI UTAMA ==========
 function startQuiz() {
   namaSiswa = document.getElementById('input-name').value.trim();
-  kelasSiswa = document.getElementById('input-class').value.trim();
   absenSiswa = document.getElementById('input-absen').value.trim();
-
+  kelasSiswa = document.getElementById('input-class').value.trim();
+  
   if (!namaSiswa || !kelasSiswa || !absenSiswa) {
-    alert("Isi nama, kelas, dan nomor absen dulu ya!");
+    alert("Isi nama, absen, dan kelas dulu ya!");
     return;
   }
 
@@ -361,15 +361,15 @@ function selesaikanKuis() {
 }
 
 // ========== KIRIM KE GOOGLE SHEETS ==========
-function kirimKeSheet(nama, kelas, absen, nilai, benar, total) {
+function kirimKeSheet(nama, absen, kelas, nilai, benar, total) {
   if (WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec")) {
     console.warn("URL Google Apps Script belum diisi. Data tidak terkirim.");
     return;
   }
   const data = {
     nama: nama,
-    kelas: kelas,
     absen: absen,
+    kelas: kelas,
     nilai: nilai,
     benar: benar,
     total: total,
