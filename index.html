@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -118,6 +118,14 @@
 
   .rules { background: #fff8e1; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
   .rules ul { margin-left: 20px; margin-top: 8px; }
+
+  /* identitas info bar */
+  .identitas-bar {
+    background: #eef1ff; padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; color: #4a3aff; margin-bottom: 12px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .identitas-bar span { background: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -136,6 +144,7 @@
         <li>Nilai dan pembahasan muncul di akhir</li>
       </ul>
     </div>
+
     <div class="input-group">
       <label>Nama Lengkap</label>
       <input type="text" id="input-name" placeholder="Masukkan nama kamu">
@@ -144,11 +153,21 @@
       <label>Kelas</label>
       <input type="text" id="input-class" placeholder="Contoh: 7A">
     </div>
+    <div class="input-group">
+      <label>Nomor Absen</label>
+      <input type="number" id="input-absen" placeholder="Contoh: 15" min="1">
+    </div>
+
     <button onclick="startQuiz()">🚀 Mulai Kuis</button>
   </div>
 
   <!-- SCREEN: QUIZ -->
   <div id="screen-quiz" class="screen">
+    <div class="identitas-bar">
+      <span>👤 <span id="info-nama"></span></span>
+      <span>🏫 <span id="info-kelas"></span></span>
+      <span>🔢 Absen <span id="info-absen"></span></span>
+    </div>
     <div class="header-info">
       <div>Soal <b id="q-current">1</b> / 25</div>
       <div class="timer" id="timer">25:00</div>
@@ -211,8 +230,9 @@ let jawabanUser = [];
 let currentIndex = 0;
 let namaSiswa = "";
 let kelasSiswa = "";
+let absenSiswa = "";
 let timerInterval;
-let sisaWaktu = 25 * 60; // 25 menit
+let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 
 // URL Google Apps Script (GANTI SETELAH DEPLOY)
@@ -222,10 +242,17 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6
 function startQuiz() {
   namaSiswa = document.getElementById('input-name').value.trim();
   kelasSiswa = document.getElementById('input-class').value.trim();
-  if (!namaSiswa || !kelasSiswa) {
-    alert("Isi nama dan kelas dulu ya!");
+  absenSiswa = document.getElementById('input-absen').value.trim();
+
+  if (!namaSiswa || !kelasSiswa || !absenSiswa) {
+    alert("Isi nama, kelas, dan nomor absen dulu ya!");
     return;
   }
+
+  // Tampilkan info identitas di bar atas kuis
+  document.getElementById('info-nama').textContent = namaSiswa;
+  document.getElementById('info-kelas').textContent = kelasSiswa;
+  document.getElementById('info-absen').textContent = absenSiswa;
 
   // Acak soal
   soalAcak = [...BANK_SOAL].sort(() => Math.random() - 0.5);
@@ -261,7 +288,6 @@ function tampilkanSoal() {
 
 function pilihJawaban(idx) {
   jawabanUser[currentIndex] = idx;
-  // Tidak bisa back, langsung lanjut
   setTimeout(() => {
     currentIndex++;
     if (currentIndex < soalAcak.length) {
@@ -296,7 +322,6 @@ function selesaikanKuis() {
   });
   const nilai = Math.round((benar / soalAcak.length) * 100);
 
-  // Tampilkan hasil
   document.getElementById('screen-quiz').classList.remove('active');
   document.getElementById('screen-result').classList.add('active');
 
@@ -308,7 +333,6 @@ function selesaikanKuis() {
   else if (nilai >= 60) circle.classList.add('score-fair');
   else circle.classList.add('score-poor');
 
-  // Feedback motivasi
   let feedback = "";
   if (nilai >= 90) feedback = "🌟 <b>Luar biasa!</b> Kamu sangat menguasai analisis data! Terus pertahankan dan ajak temanmu belajar bersama ya!";
   else if (nilai >= 75) feedback = "👏 <b>Bagus sekali!</b> Pemahamanmu sudah baik. Sedikit latihan lagi dan kamu bisa jadi yang terbaik!";
@@ -316,7 +340,6 @@ function selesaikanKuis() {
   else feedback = "🔥 <b>Jangan patah semangat!</b> Belajar itu proses. Baca pembahasan di bawah, ulangi materi, dan coba lagi. Kesuksesan menanti!";
   document.getElementById('feedback-text').innerHTML = feedback;
 
-  // Pembahasan
   const reviewArea = document.getElementById('review-area');
   reviewArea.innerHTML = "";
   soalAcak.forEach((soal, i) => {
@@ -334,12 +357,11 @@ function selesaikanKuis() {
     reviewArea.appendChild(div);
   });
 
-  // Kirim ke Google Sheets
-  kirimKeSheet(namaSiswa, kelasSiswa, nilai, benar, soalAcak.length);
+  kirimKeSheet(namaSiswa, kelasSiswa, absenSiswa, nilai, benar, soalAcak.length);
 }
 
 // ========== KIRIM KE GOOGLE SHEETS ==========
-function kirimKeSheet(nama, kelas, nilai, benar, total) {
+function kirimKeSheet(nama, kelas, absen, nilai, benar, total) {
   if (WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec")) {
     console.warn("URL Google Apps Script belum diisi. Data tidak terkirim.");
     return;
@@ -347,6 +369,7 @@ function kirimKeSheet(nama, kelas, nilai, benar, total) {
   const data = {
     nama: nama,
     kelas: kelas,
+    absen: absen,
     nilai: nilai,
     benar: benar,
     total: total,
