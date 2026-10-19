@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -197,7 +197,7 @@
     </div>
     <div class="input-group">
       <label>Absen</label>
-      <input type="number" id="input-absen" placeholder="Contoh: 15" min="1">
+      <input type="text" id="input-absen" placeholder="Contoh: 15">
     </div>
     <div class="input-group">
       <label>Kelas</label>
@@ -249,6 +249,10 @@
 
 </div>
 
+<!-- Hidden Form & Iframe untuk Mengirim Data Anti-Duplicate/Retry -->
+<iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+<form id="google-form" target="hidden_iframe" method="POST" style="display:none;"></form>
+
 <script>
 // ========== BANK SOAL (25 SOAL TULIS RUMUS) ==========
 const BANK_SOAL = [
@@ -290,8 +294,6 @@ let kelasSiswa = "";
 let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
-
-// ✅ FLAG ANTI-DOBEL: hanya kirim sekali per sesi
 let sudahKirim = false;
 
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
@@ -316,9 +318,13 @@ function cekJawaban(userInput, jawabanBenar) {
 
 // ========== FUNGSI UTAMA ==========
 function startQuiz() {
-  namaSiswa = document.getElementById('input-name').value.trim();
-  absenSiswa = document.getElementById('input-absen').value.trim();
-  kelasSiswa = document.getElementById('input-class').value.trim();
+  const elNama = document.getElementById('input-name');
+  const elAbsen = document.getElementById('input-absen');
+  const elKelas = document.getElementById('input-class');
+
+  namaSiswa = elNama ? elNama.value.trim() : "";
+  absenSiswa = elAbsen ? elAbsen.value.trim() : "";
+  kelasSiswa = elKelas ? elKelas.value.trim() : "";
 
   if (!namaSiswa || !kelasSiswa || !absenSiswa) {
     alert("Isi nama, absen, dan kelas dulu ya!");
@@ -334,7 +340,7 @@ function startQuiz() {
   currentIndex = 0;
   sisaWaktu = 25 * 60;
   waktuHabis = false;
-  sudahKirim = false; // reset flag
+  sudahKirim = false;
 
   document.getElementById('screen-start').classList.remove('active');
   document.getElementById('screen-quiz').classList.add('active');
@@ -488,12 +494,11 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ========== KIRIM KE GOOGLE SHEETS (ANTI-DOBEL) ==========
+// ========== KIRIM KE GOOGLE SHEETS (FORM HIDDEN SUBMIT) ==========
 function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
 
-  // ✅ FLAG ANTI-DOBEL: jika sudah kirim, jangan kirim lagi
   if (sudahKirim) {
     statusEl.className = 'send-status success';
     statusEl.textContent = '✅ Nilai sudah dikirim sebelumnya.';
@@ -510,39 +515,47 @@ function kirimKeSheet(benar, nilai) {
   statusEl.className = 'send-status sending';
   statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
 
-  const formData = new URLSearchParams();
-  formData.append('nama', namaSiswa);
-  formData.append('absen', absenSiswa);
-  formData.append('kelas', kelasSiswa);
-  formData.append('nilai', nilai);
-  formData.append('benar', benar);
-  formData.append('total', soalAcak.length);
-  formData.append('waktu', new Date().toLocaleString('id-ID'));
+  try {
+    const detailList = [];
+    soalAcak.forEach((soal, i) => {
+      const userJawab = jawabanUser[i] || "";
+      const isCorrect = cekJawaban(userJawab, soal.a);
+      detailList.push({
+        soal: soal.q,
+        jawabanSiswa: userJawab || "(tidak dijawab)",
+        kunciJawaban: soal.a[0],
+        status: isCorrect ? "BENAR" : "SALAH"
+      });
+    });
 
-  soalAcak.forEach((soal, i) => {
-    const userJawab = jawabanUser[i] || "";
-    const isCorrect = cekJawaban(userJawab, soal.a);
-    formData.append('soal_' + (i + 1), soal.q);
-    formData.append('jawaban_' + (i + 1), userJawab);
-    formData.append('kunci_' + (i + 1), soal.a[0]);
-    formData.append('status_' + (i + 1), isCorrect ? "BENAR" : "SALAH");
-  });
+    const payload = {
+      nama: namaSiswa,
+      absen: absenSiswa,
+      kelas: kelasSiswa,
+      nilai: nilai,
+      benar: benar,
+      total: soalAcak.length,
+      detail: detailList
+    };
 
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: formData.toString()
-  })
-  .then(() => {
+    const form = document.getElementById('google-form');
+    form.action = WEB_APP_URL;
+    form.innerHTML = '';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'postData';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    form.submit();
+
     statusEl.className = 'send-status success';
     statusEl.textContent = '✅ Nilai dan detail jawaban berhasil dikirim ke Google Sheets!';
-  })
-  .catch(err => {
+  } catch (err) {
     statusEl.className = 'send-status error';
     statusEl.textContent = '❌ Gagal mengirim: ' + err.message;
-    console.warn("Gagal kirim:", err);
-  });
+  }
 }
 </script>
 </body>
