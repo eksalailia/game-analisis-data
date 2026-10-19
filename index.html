@@ -204,7 +204,7 @@
       <input type="text" id="input-class" placeholder="Contoh: 7A">
     </div>
 
-    <button onclick="startQuiz()">🚀 Mulai Latihan</button>
+    <button type="button" onclick="startQuiz()">🚀 Mulai Latihan</button>
   </div>
 
   <!-- SCREEN: QUIZ -->
@@ -228,8 +228,8 @@
       <label>✍️ Tulis rumusmu di sini:</label>
       <input type="text" id="answer-input" class="answer-input"
              placeholder="Contoh: =SUM(A1:A10)" autocomplete="off" spellcheck="false">
-      <button class="btn-submit" onclick="submitJawaban()">✅ Jawab & Lanjut</button>
-      <button class="btn-skip" onclick="lewatiSoal()">⏭️ Lewati Soal</button>
+      <button type="button" class="btn-submit" onclick="submitJawaban()">✅ Jawab & Lanjut</button>
+      <button type="button" class="btn-skip" onclick="lewatiSoal()">⏭️ Lewati Soal</button>
     </div>
   </div>
 
@@ -291,7 +291,9 @@ let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 
-// ✅ URL GOOGLE APPS SCRIPT — SUDAH DIPASANG
+// ✅ FLAG ANTI-DOBEL: hanya kirim sekali per sesi
+let sudahKirim = false;
+
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
 
 // ========== NORMALISASI & CEK JAWABAN ==========
@@ -332,6 +334,7 @@ function startQuiz() {
   currentIndex = 0;
   sisaWaktu = 25 * 60;
   waktuHabis = false;
+  sudahKirim = false; // reset flag
 
   document.getElementById('screen-start').classList.remove('active');
   document.getElementById('screen-quiz').classList.add('active');
@@ -485,11 +488,62 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ========== KIRIM KE GOOGLE SHEETS ==========
+// ========== KIRIM KE GOOGLE SHEETS (ANTI-DOBEL) ==========
 function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
 
-  // Debug: log URL
-  console.log("WEB_APP_URL =", WEB_APP_URL);
-  console.log("Panjang URL =", WEB_APP_URL ? WEB_APP_URL
+  // ✅ FLAG ANTI-DOBEL: jika sudah kirim, jangan kirim lagi
+  if (sudahKirim) {
+    statusEl.className = 'send-status success';
+    statusEl.textContent = '✅ Nilai sudah dikirim sebelumnya.';
+    return;
+  }
+  sudahKirim = true;
+
+  if (!WEB_APP_URL || WEB_APP_URL.trim() === "") {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '⚠️ URL Google Apps Script kosong.';
+    return;
+  }
+
+  statusEl.className = 'send-status sending';
+  statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
+
+  const formData = new URLSearchParams();
+  formData.append('nama', namaSiswa);
+  formData.append('absen', absenSiswa);
+  formData.append('kelas', kelasSiswa);
+  formData.append('nilai', nilai);
+  formData.append('benar', benar);
+  formData.append('total', soalAcak.length);
+  formData.append('waktu', new Date().toLocaleString('id-ID'));
+
+  soalAcak.forEach((soal, i) => {
+    const userJawab = jawabanUser[i] || "";
+    const isCorrect = cekJawaban(userJawab, soal.a);
+    formData.append('soal_' + (i + 1), soal.q);
+    formData.append('jawaban_' + (i + 1), userJawab);
+    formData.append('kunci_' + (i + 1), soal.a[0]);
+    formData.append('status_' + (i + 1), isCorrect ? "BENAR" : "SALAH");
+  });
+
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: formData.toString()
+  })
+  .then(() => {
+    statusEl.className = 'send-status success';
+    statusEl.textContent = '✅ Nilai dan detail jawaban berhasil dikirim ke Google Sheets!';
+  })
+  .catch(err => {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '❌ Gagal mengirim: ' + err.message;
+    console.warn("Gagal kirim:", err);
+  });
+}
+</script>
+</body>
+</html>
