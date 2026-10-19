@@ -251,7 +251,6 @@
 
 <script>
 // ========== BANK SOAL (25 SOAL TULIS RUMUS) ==========
-// Semua soal IF hanya 2 kondisi (if...else), tidak ada IF bertingkat
 const BANK_SOAL = [
   { q: "Tuliskan rumus untuk menjumlahkan seluruh nilai dari sel A1 sampai A10.", a: ["=sum(a1:a10)"], hint: "Gunakan fungsi SUM dengan range A1:A10", e: "Rumus yang benar: <b>=SUM(A1:A10)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai rata-rata dari sel B1 sampai B20.", a: ["=average(b1:b20)"], hint: "Gunakan fungsi AVERAGE", e: "Rumus yang benar: <b>=AVERAGE(B1:B20)</b>" },
@@ -292,7 +291,7 @@ let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 
-// URL Google Apps Script — GANTI jika deploy ulang
+// ✅ URL GOOGLE APPS SCRIPT — SUDAH DIPASANG
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
 
 // ========== NORMALISASI & CEK JAWABAN ==========
@@ -486,67 +485,11 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ========== KIRIM KE GOOGLE SHEETS (FINAL FIX) ==========
+// ========== KIRIM KE GOOGLE SHEETS ==========
 function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
 
-  // ✅ FIX: cek hanya kosong & format, TIDAK pakai includes() URL
-  if (!WEB_APP_URL || WEB_APP_URL.trim() === "") {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '⚠️ URL Google Apps Script kosong. Isi dulu di kode HTML.';
-    return;
-  }
-
-  if (!WEB_APP_URL.startsWith("https://script.google.com/macros/s/")) {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '⚠️ URL tidak valid. Harus diawali https://script.google.com/macros/s/';
-    return;
-  }
-
-  if (!WEB_APP_URL.endsWith("/exec")) {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '⚠️ URL harus diakhiri /exec (bukan /dev).';
-    return;
-  }
-
-  statusEl.className = 'send-status sending';
-  statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
-
-  const formData = new URLSearchParams();
-  formData.append('nama', namaSiswa);
-  formData.append('absen', absenSiswa);
-  formData.append('kelas', kelasSiswa);
-  formData.append('nilai', nilai);
-  formData.append('benar', benar);
-  formData.append('total', soalAcak.length);
-  formData.append('waktu', new Date().toLocaleString('id-ID'));
-
-  soalAcak.forEach((soal, i) => {
-    const userJawab = jawabanUser[i] || "";
-    const isCorrect = cekJawaban(userJawab, soal.a);
-    formData.append('soal_' + (i + 1), soal.q);
-    formData.append('jawaban_' + (i + 1), userJawab);
-    formData.append('kunci_' + (i + 1), soal.a[0]);
-    formData.append('status_' + (i + 1), isCorrect ? "BENAR" : "SALAH");
-  });
-
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: formData.toString()
-  })
-  .then(() => {
-    statusEl.className = 'send-status success';
-    statusEl.textContent = '✅ Nilai dan detail jawaban berhasil dikirim ke Google Sheets!';
-  })
-  .catch(err => {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '❌ Gagal mengirim: ' + err.message;
-    console.warn("Gagal kirim:", err);
-  });
-}
-</script>
-</body>
-</html>
+  // Debug: log URL
+  console.log("WEB_APP_URL =", WEB_APP_URL);
+  console.log("Panjang URL =", WEB_APP_URL ? WEB_APP_URL
