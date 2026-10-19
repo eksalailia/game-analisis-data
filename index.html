@@ -371,7 +371,7 @@ function kirimKeSheet(nama, absen, kelas, nilai, benar, total) {
   statusEl.className = 'send-status sending';
   statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
 
-  if (!WEB_APP_URL || WEB_APP_URL.includes("GANTI_DENGAN_URL")) {
+  if (!WEB_APP_URL || WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec")) {
     statusEl.className = 'send-status error';
     statusEl.textContent = '⚠️ URL Google Apps Script belum diisi.';
     return;
