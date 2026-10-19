@@ -501,6 +501,59 @@ function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
 
-  if (sudahKirim) {
+ if (sudahKirim) {
     statusEl.className = 'send-status success';
-    statusEl.textContent = '
+    statusEl.textContent = '✅ Nilai sudah terkirim sebelumnya.';
+    return;
+  }
+
+  sudahKirim = true;
+
+  // Pastikan URL sudah diisi
+  if (!WEB_APP_URL || WEB_APP_URL === "MASUKKAN_URL") {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '❌ URL Google Apps Script belum diatur.';
+    return;
+  }
+
+  statusEl.className = 'send-status sending';
+  statusEl.textContent = '⏳ Mengirim nilai ke sistem guru...';
+
+  // Siapkan data yang akan dikirim
+  const payload = {
+    nama: namaSiswa,
+    absen: absenSiswa,
+    kelas: kelasSiswa,
+    nilai: nilai,
+    benar: benar,
+    total: soalAcak.length
+  };
+
+  // Kirim data via form tersembunyi (mencegah duplikasi/retry)
+  try {
+    const form = document.getElementById('google-form');
+    form.action = WEB_APP_URL;
+    form.innerHTML = ''; 
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'postData';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    
+    form.submit();
+
+    setTimeout(() => {
+      statusEl.className = 'send-status success';
+      statusEl.textContent = '✅ Nilai berhasil terkirim ke sistem guru!';
+    }, 1500);
+    
+  } catch (err) {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '❌ Gagal mengirim data. Hubungi guru Anda.';
+    sudahKirim = false; 
+  }
+}
+</script>
+</body>
+</html>
