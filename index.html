@@ -249,7 +249,7 @@
 
 </div>
 
-<!-- Hidden Form & Iframe untuk Mengirim Data Anti-Duplicate/Retry -->
+<!-- Iframe & Form hidden untuk kirim ke Apps Script -->
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 <form id="google-form" target="hidden_iframe" method="POST" style="display:none;"></form>
 
@@ -501,62 +501,4 @@ function kirimKeSheet(benar, nilai) {
 
   if (sudahKirim) {
     statusEl.className = 'send-status success';
-    statusEl.textContent = '✅ Nilai sudah dikirim sebelumnya.';
-    return;
-  }
-  sudahKirim = true;
-
-  if (!WEB_APP_URL || WEB_APP_URL.trim() === "") {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '⚠️ URL Google Apps Script kosong.';
-    return;
-  }
-
-  statusEl.className = 'send-status sending';
-  statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
-
-  try {
-    const detailList = [];
-    soalAcak.forEach((soal, i) => {
-      const userJawab = jawabanUser[i] || "";
-      const isCorrect = cekJawaban(userJawab, soal.a);
-      detailList.push({
-        soal: soal.q,
-        jawabanSiswa: userJawab || "(tidak dijawab)",
-        kunciJawaban: soal.a[0],
-        status: isCorrect ? "BENAR" : "SALAH"
-      });
-    });
-
-    const payload = {
-      nama: namaSiswa,
-      absen: absenSiswa,
-      kelas: kelasSiswa,
-      nilai: nilai,
-      benar: benar,
-      total: soalAcak.length,
-      detail: detailList
-    };
-
-    const form = document.getElementById('google-form');
-    form.action = WEB_APP_URL;
-    form.innerHTML = '';
-    
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'postData';
-    input.value = JSON.stringify(payload);
-    form.appendChild(input);
-
-    form.submit();
-
-    statusEl.className = 'send-status success';
-    statusEl.textContent = '✅ Nilai dan detail jawaban berhasil dikirim ke Google Sheets!';
-  } catch (err) {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '❌ Gagal mengirim: ' + err.message;
-  }
-}
-</script>
-</body>
-</html>
+    statusEl.textContent = '✅ Nil
