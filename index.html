@@ -105,7 +105,6 @@
     padding: 15px; border-radius: 10px; background: #f8f9ff;
   }
 
-  /* === STYLE PEMBAHASAN DENGAN TANDA BENAR/SALAH === */
   .review-item {
     background: #f8f9ff; border-radius: 12px; padding: 15px;
     margin-bottom: 14px; border-left: 5px solid #ddd;
@@ -252,29 +251,30 @@
 
 <script>
 // ========== BANK SOAL (25 SOAL TULIS RUMUS) ==========
+// Semua soal IF hanya 2 kondisi (if...else), tidak ada IF bertingkat
 const BANK_SOAL = [
   { q: "Tuliskan rumus untuk menjumlahkan seluruh nilai dari sel A1 sampai A10.", a: ["=sum(a1:a10)"], hint: "Gunakan fungsi SUM dengan range A1:A10", e: "Rumus yang benar: <b>=SUM(A1:A10)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai rata-rata dari sel B1 sampai B20.", a: ["=average(b1:b20)"], hint: "Gunakan fungsi AVERAGE", e: "Rumus yang benar: <b>=AVERAGE(B1:B20)</b>" },
   { q: "Tuliskan rumus untuk menghitung banyaknya data angka di sel C1 sampai C15.", a: ["=count(c1:c15)"], hint: "Gunakan fungsi COUNT", e: "Rumus yang benar: <b>=COUNT(C1:C15)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terkecil dari sel D1 sampai D30.", a: ["=min(d1:d30)"], hint: "Gunakan fungsi MIN", e: "Rumus yang benar: <b>=MIN(D1:D30)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terbesar dari sel E1 sampai E25.", a: ["=max(e1:e25)"], hint: "Gunakan fungsi MAX", e: "Rumus yang benar: <b>=MAX(E1:E25)</b>" },
-  { q: "Tuliskan rumus IF: jika nilai di A1 lebih besar dari 75, tampilkan \"Lulus\", jika tidak tampilkan \"Remedial\".", a: ["=if(a1>75,\"lulus\",\"remedial\")", "=if(a1>75,'lulus','remedial')"], hint: "Format: =IF(kondisi, nilai_jika_benar, nilai_jika_salah)", e: "Rumus yang benar: <b>=IF(A1>75,\"Lulus\",\"Remedial\")</b>" },
+  { q: "Tuliskan rumus IF (2 kondisi): jika nilai di A1 lebih besar dari 75, tampilkan \"Lulus\", jika tidak tampilkan \"Remedial\".", a: ["=if(a1>75,\"lulus\",\"remedial\")", "=if(a1>75,'lulus','remedial')"], hint: "Format: =IF(kondisi, nilai_jika_benar, nilai_jika_salah)", e: "Rumus yang benar: <b>=IF(A1>75,\"Lulus\",\"Remedial\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan nilai di B1 sampai B10, HANYA jika nilai di A1 sampai A10 sama dengan \"Laki-laki\".", a: ["=sumif(a1:a10,\"laki-laki\",b1:b10)", "=sumif(a1:a10,'laki-laki',b1:b10)"], hint: "Gunakan SUMIF(range_kriteria, kriteria, range_jumlah)", e: "Rumus yang benar: <b>=SUMIF(A1:A10,\"Laki-laki\",B1:B10)</b>" },
   { q: "Tuliskan rumus untuk menghitung berapa banyak siswa yang nilainya di A1 sampai A20 LEBIH DARI 75.", a: ["=countif(a1:a20,\">75\")"], hint: "Gunakan COUNTIF dengan kriteria \">75\"", e: "Rumus yang benar: <b>=COUNTIF(A1:A20,\">75\")</b>" },
   { q: "Tuliskan rumus untuk menghitung jumlah sel di B1 sampai B15 yang berisi kata \"Lulus\".", a: ["=countif(b1:b15,\"lulus\")", "=countif(b1:b15,'lulus')"], hint: "Gunakan COUNTIF dengan kriteria teks", e: "Rumus yang benar: <b>=COUNTIF(B1:B15,\"Lulus\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan nilai di C1 sampai C10, HANYA jika nilainya lebih dari 80.", a: ["=sumif(c1:c10,\">80\")", "=sumif(c1:c10,\">80\",c1:c10)"], hint: "SUMIF bisa dipakai 2 argumen jika range kriteria = range jumlah", e: "Rumus yang benar: <b>=SUMIF(C1:C10,\">80\")</b>" },
-  { q: "Tuliskan rumus IF: jika nilai di B1 lebih besar atau sama dengan 60, tampilkan \"Lulus\", jika tidak \"Tidak Lulus\".", a: ["=if(b1>=60,\"lulus\",\"tidak lulus\")", "=if(b1>=60,'lulus','tidak lulus')"], hint: "Gunakan operator >=", e: "Rumus yang benar: <b>=IF(B1>=60,\"Lulus\",\"Tidak Lulus\")</b>" },
+  { q: "Tuliskan rumus IF (2 kondisi): jika nilai di B1 lebih besar atau sama dengan 60, tampilkan \"Lulus\", jika tidak \"Tidak Lulus\".", a: ["=if(b1>=60,\"lulus\",\"tidak lulus\")", "=if(b1>=60,'lulus','tidak lulus')"], hint: "Gunakan operator >=", e: "Rumus yang benar: <b>=IF(B1>=60,\"Lulus\",\"Tidak Lulus\")</b>" },
   { q: "Tuliskan rumus untuk mencari rata-rata nilai di D1 sampai D12, HANYA jika nilai di C1 sampai C12 sama dengan \"Perempuan\".", a: ["=averageif(c1:c12,\"perempuan\",d1:d12)", "=averageif(c1:c12,'perempuan',d1:d12)"], hint: "Gunakan AVERAGEIF", e: "Rumus yang benar: <b>=AVERAGEIF(C1:C12,\"Perempuan\",D1:D12)</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan isi sel A1, A2, dan A3 (tanpa range).", a: ["=sum(a1,a2,a3)", "=a1+a2+a3"], hint: "Bisa pakai SUM dengan koma, atau penjumlahan langsung", e: "Rumus yang benar: <b>=SUM(A1,A2,A3)</b> atau <b>=A1+A2+A3</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terbesar dari A1, A2, A3, dan A4 (tanpa range).", a: ["=max(a1,a2,a3,a4)"], hint: "MAX bisa menerima beberapa argumen", e: "Rumus yang benar: <b>=MAX(A1,A2,A3,A4)</b>" },
   { q: "Tuliskan rumus untuk menghitung jumlah sel yang berisi angka di range A1:A10.", a: ["=count(a1:a10)"], hint: "COUNT menghitung sel berisi angka", e: "Rumus yang benar: <b>=COUNT(A1:A10)</b>" },
   { q: "Tuliskan rumus untuk menghitung jumlah sel yang TIDAK KOSONG di range B1:B20.", a: ["=counta(b1:b20)"], hint: "Gunakan COUNTA (count all)", e: "Rumus yang benar: <b>=COUNTA(B1:B20)</b>" },
-  { q: "Tuliskan rumus IF bertingkat: jika A1>=90 tampilkan \"A\", jika A1>=75 tampilkan \"B\", selain itu \"C\".", a: ["=if(a1>=90,\"a\",if(a1>=75,\"b\",\"c\"))", "=if(a1>=90,'a',if(a1>=75,'b','c'))"], hint: "IF di dalam IF (nested IF)", e: "Rumus yang benar: <b>=IF(A1>=90,\"A\",IF(A1>=75,\"B\",\"C\"))</b>" },
+  { q: "Tuliskan rumus IF (2 kondisi): jika nilai di C1 lebih kecil dari 70, tampilkan \"Remedial\", jika tidak tampilkan \"Lulus\".", a: ["=if(c1<70,\"remedial\",\"lulus\")", "=if(c1<70,'remedial','lulus')"], hint: "Gunakan operator <", e: "Rumus yang benar: <b>=IF(C1<70,\"Remedial\",\"Lulus\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan nilai di B1 sampai B10, HANYA jika nilai di A1 sampai A10 lebih dari atau sama dengan 70.", a: ["=sumif(a1:a10,\">=70\",b1:b10)"], hint: "Gunakan SUMIF dengan kriteria \">=70\"", e: "Rumus yang benar: <b>=SUMIF(A1:A10,\">=70\",B1:B10)</b>" },
   { q: "Tuliskan rumus untuk menghitung berapa banyak sel di C1:C20 yang nilainya KURANG DARI 60.", a: ["=countif(c1:c20,\"<60\")"], hint: "COUNTIF dengan kriteria \"<60\"", e: "Rumus yang benar: <b>=COUNTIF(C1:C20,\"<60\")</b>" },
   { q: "Tuliskan rumus untuk mencari nilai rata-rata dari A1 sampai A5.", a: ["=average(a1:a5)"], hint: "AVERAGE", e: "Rumus yang benar: <b>=AVERAGE(A1:A5)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terkecil dari B1 sampai B10.", a: ["=min(b1:b10)"], hint: "MIN", e: "Rumus yang benar: <b>=MIN(B1:B10)</b>" },
-  { q: "Tuliskan rumus IF: jika nilai di C1 lebih kecil dari 70, tampilkan \"Remedial\", jika tidak \"Lulus\".", a: ["=if(c1<70,\"remedial\",\"lulus\")", "=if(c1<70,'remedial','lulus')"], hint: "Operator <", e: "Rumus yang benar: <b>=IF(C1<70,\"Remedial\",\"Lulus\")</b>" },
+  { q: "Tuliskan rumus IF (2 kondisi): jika nilai di D1 sama dengan \"Laki-laki\", tampilkan \"Putra\", jika tidak tampilkan \"Putri\".", a: ["=if(d1=\"laki-laki\",\"putra\",\"putri\")", "=if(d1='laki-laki','putra','putri')"], hint: "Bandingkan teks dengan tanda kutip", e: "Rumus yang benar: <b>=IF(D1=\"Laki-laki\",\"Putra\",\"Putri\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan seluruh nilai dari sel A1 sampai A100.", a: ["=sum(a1:a100)"], hint: "SUM dengan range besar", e: "Rumus yang benar: <b>=SUM(A1:A100)</b>" },
   { q: "Tuliskan rumus untuk menghitung jumlah siswa yang jenis kelaminnya \"Laki-laki\" di kolom B (B1 sampai B30).", a: ["=countif(b1:b30,\"laki-laki\")", "=countif(b1:b30,'laki-laki')"], hint: "COUNTIF dengan kriteria teks", e: "Rumus yang benar: <b>=COUNTIF(B1:B30,\"Laki-laki\")</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terbesar dari D1 sampai D50.", a: ["=max(d1:d50)"], hint: "MAX", e: "Rumus yang benar: <b>=MAX(D1:D50)</b>" },
@@ -425,7 +425,6 @@ function selesaikanKuis() {
   else if (nilai >= 60) circle.classList.add('score-fair');
   else circle.classList.add('score-poor');
 
-  // Ringkasan
   const summaryBox = document.getElementById('summary-box');
   summaryBox.innerHTML = `
     <div class="summary-item"><strong>${benar}</strong>Benar</div>
@@ -441,7 +440,6 @@ function selesaikanKuis() {
   else feedback = "🔥 <b>Jangan patah semangat!</b> Belajar itu proses. Baca pembahasan di bawah, ulangi materi, dan coba lagi!";
   document.getElementById('feedback-text').innerHTML = feedback;
 
-  // Pembahasan dengan tanda ✅/❌
   const reviewArea = document.getElementById('review-area');
   reviewArea.innerHTML = "";
   soalAcak.forEach((soal, i) => {
@@ -487,21 +485,21 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ========== KIRIM KE GOOGLE SHEETS ==========
+// ========== KIRIM KE GOOGLE SHEETS (FIXED) ==========
 function kirimKeSheet(benar, nilai) {
   const statusEl = document.getElementById('send-status');
   statusEl.style.display = 'block';
   statusEl.className = 'send-status sending';
   statusEl.textContent = '⏳ Mengirim nilai ke Google Sheets...';
 
-  if (!WEB_APP_URL || WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec")) {
+  // ✅ FIX: cek hanya placeholder, bukan includes URL panjang
+  if (!WEB_APP_URL || WEB_APP_URL === "" || WEB_APP_URL.indexOf("https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec") !== -1) {
     statusEl.className = 'send-status error';
     statusEl.textContent = '⚠️ URL Google Apps Script belum diisi.';
     return;
   }
 
   const formData = new URLSearchParams();
-  // === DATA RINGKASAN ===
   formData.append('nama', namaSiswa);
   formData.append('absen', absenSiswa);
   formData.append('kelas', kelasSiswa);
@@ -510,7 +508,6 @@ function kirimKeSheet(benar, nilai) {
   formData.append('total', soalAcak.length);
   formData.append('waktu', new Date().toLocaleString('id-ID'));
 
-  // === DETAIL 25 SOAL ===
   soalAcak.forEach((soal, i) => {
     const userJawab = jawabanUser[i] || "";
     const isCorrect = cekJawaban(userJawab, soal.a);
