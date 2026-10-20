@@ -79,12 +79,51 @@
     border-radius: 10px; font-size: 16px;
     font-family: 'Courier New', monospace;
     background: #f8f9ff;
+    transition: all 0.3s;
   }
   .answer-input:focus {
     outline: none; border-color: #4a3aff;
     box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
   }
   .answer-input::placeholder { font-family: 'Segoe UI', sans-serif; color: #aaa; }
+
+  /* === FEEDBACK WARNA SAAT JAWAB === */
+  .answer-input.jawaban-benar {
+    border-color: #11998e !important;
+    background: #e8f8f0 !important;
+    color: #0d7a5f !important;
+    box-shadow: 0 0 0 4px rgba(17,153,142,0.25) !important;
+  }
+  .answer-input.jawaban-salah {
+    border-color: #e74c3c !important;
+    background: #fde8e8 !important;
+    color: #b02a1d !important;
+    box-shadow: 0 0 0 4px rgba(231,76,60,0.25) !important;
+  }
+
+  .quick-feedback {
+    display: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    animation: popIn 0.3s;
+  }
+  .quick-feedback.show { display: block; }
+  .quick-feedback.correct {
+    background: #d4f4e4; color: #0d7a5f;
+    border: 2px solid #11998e;
+  }
+  .quick-feedback.wrong {
+    background: #fde0e0; color: #b02a1d;
+    border: 2px solid #e74c3c;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
   .btn-submit { background: linear-gradient(135deg, #11998e, #38ef7d); font-size: 15px; padding: 12px; }
   .btn-skip { background: #fff; color: #666; border: 2px solid #ddd; font-size: 14px; padding: 10px; }
   .btn-skip:hover { background: #f8f9ff; color: #333; }
@@ -237,8 +276,9 @@
       <label>✍️ Tulis rumusmu di sini:</label>
       <input type="text" id="answer-input" class="answer-input"
              placeholder="Contoh: =SUM(A1:A10)" autocomplete="off" spellcheck="false">
-      <button type="button" class="btn-submit" onclick="submitJawaban()">✅ Jawab & Lanjut</button>
-      <button type="button" class="btn-skip" onclick="lewatiSoal()">⏭️ Lewati Soal</button>
+      <div class="quick-feedback" id="quick-feedback"></div>
+      <button type="button" class="btn-submit" id="btn-submit" onclick="submitJawaban()">✅ Jawab & Lanjut</button>
+      <button type="button" class="btn-skip" id="btn-skip" onclick="lewatiSoal()">⏭️ Lewati Soal</button>
     </div>
   </div>
 
@@ -306,6 +346,7 @@ let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 let sudahKirim = false;
+let sedangFeedback = false; // mencegah klik ganda saat feedback
 
 // GANTI URL DI BAWAH INI DENGAN URL WEB APP ANDA
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
@@ -317,10 +358,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6
 //  - Pemisah argumen WAJIB koma (,). Titik koma (;) atau titik (.) = SALAH ❗
 //  - Teks WAJIB pakai kutip ganda ("). Kutip tunggal (') = SALAH ❗
 //  - TIDAK BOLEH ada spasi di mana pun ❗
-//
-// Cara kerja: hanya huruf yang di-lowercase. Selain itu dibiarkan apa adanya.
-// Jadi kalau siswa pakai ; atau ' atau spasi, hasil normalisasi akan BEDA
-// dengan kunci jawaban → otomatis dianggap SALAH.
 function normalisasi(str) {
   if (str === null || str === undefined) return "";
   // HANYA lowercase. Tidak ada penggantian ; . ' " spasi.
@@ -360,6 +397,7 @@ function startQuiz() {
   sisaWaktu = 25 * 60;
   waktuHabis = false;
   sudahKirim = false;
+  sedangFeedback = false;
 
   document.getElementById('screen-start').classList.remove('active');
   document.getElementById('screen-quiz').classList.add('active');
@@ -379,34 +417,75 @@ function tampilkanSoal() {
   const input = document.getElementById('answer-input');
   input.value = "";
   input.disabled = false;
+  input.className = "answer-input"; // reset warna
   input.focus();
+
+  // reset tombol & feedback
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('btn-skip').disabled = false;
+  const fb = document.getElementById('quick-feedback');
+  fb.className = "quick-feedback";
+  fb.textContent = "";
+  sedangFeedback = false;
 
   input.onkeydown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      submitJawaban();
+      if (!sedangFeedback) submitJawaban();
     }
   };
 }
 
 function submitJawaban() {
+  if (sedangFeedback) return;
+
   const input = document.getElementById('answer-input');
   const jawaban = input.value.trim();
   if (!jawaban) {
     alert("Tulis dulu rumusmu ya! Kalau tidak tahu, klik 'Lewati Soal'.");
     return;
   }
+
+  // Simpan jawaban
   jawabanUser[currentIndex] = jawaban;
-  lanjutSoal();
+
+  // Cek benar/salah
+  const soal = soalAcak[currentIndex];
+  const isCorrect = cekJawaban(jawaban, soal.a);
+
+  // Tampilkan feedback warna
+  sedangFeedback = true;
+  input.disabled = true;
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('btn-skip').disabled = true;
+
+  const fb = document.getElementById('quick-feedback');
+
+  if (isCorrect) {
+    input.classList.add('jawaban-benar');
+    fb.className = "quick-feedback show correct";
+    fb.innerHTML = "✅ <b>BENAR!</b> Jawabanmu tepat.";
+  } else {
+    input.classList.add('jawaban-salah');
+    fb.className = "quick-feedback show wrong";
+    fb.innerHTML = "❌ <b>SALAH!</b> Perhatikan aturan: pakai <b>koma (,)</b>, <b>kutip ganda (\")</b>, ada <b>=</b>, tanpa spasi.";
+  }
+
+  // Lanjut otomatis setelah 1.4 detik
+  setTimeout(() => {
+    lanjutSoal();
+  }, 1400);
 }
 
 function lewatiSoal() {
+  if (sedangFeedback) return;
   jawabanUser[currentIndex] = null;
   lanjutSoal();
 }
 
 function lanjutSoal() {
-  document.getElementById('answer-input').disabled = true;
+  const input = document.getElementById('answer-input');
+  input.disabled = true;
   setTimeout(() => {
     currentIndex++;
     if (currentIndex < soalAcak.length) {
@@ -414,66 +493,8 @@ function lanjutSoal() {
     } else {
       selesaikanKuis();
     }
-  }, 200);
+  }, 150);
 }
 
 function mulaiTimer() {
-  const timerEl = document.getElementById('timer');
-  timerInterval = setInterval(() => {
-    sisaWaktu--;
-    const m = Math.floor(sisaWaktu / 60);
-    const s = sisaWaktu % 60;
-    timerEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-    if (sisaWaktu <= 60) timerEl.classList.add('warning');
-    if (sisaWaktu <= 0) {
-      clearInterval(timerInterval);
-      waktuHabis = true;
-      selesaikanKuis();
-    }
-  }, 1000);
-}
-
-function selesaikanKuis() {
-  clearInterval(timerInterval);
-
-  let benar = 0;
-  soalAcak.forEach((soal, i) => {
-    if (cekJawaban(jawabanUser[i] || "", soal.a)) benar++;
-  });
-  const nilai = Math.round((benar / soalAcak.length) * 100);
-
-  document.getElementById('screen-quiz').classList.remove('active');
-  document.getElementById('screen-result').classList.add('active');
-
-  const circle = document.getElementById('score-circle');
-  circle.textContent = nilai;
-  circle.className = "score-circle";
-  if (nilai >= 90) circle.classList.add('score-excellent');
-  else if (nilai >= 75) circle.classList.add('score-good');
-  else if (nilai >= 60) circle.classList.add('score-fair');
-  else circle.classList.add('score-poor');
-
-  const summaryBox = document.getElementById('summary-box');
-  summaryBox.innerHTML = `
-    <div class="summary-item"><strong>${benar}</strong>Benar</div>
-    <div class="summary-item"><strong>${soalAcak.length - benar}</strong>Salah</div>
-    <div class="summary-item"><strong>${soalAcak.length}</strong>Total Soal</div>
-    <div class="summary-item"><strong>${Math.floor(sisaWaktu/60)}:${(sisaWaktu%60).toString().padStart(2,'0')}</strong>Sisa Waktu</div>
-  `;
-
-  let feedback = "";
-  if (nilai >= 90) feedback = "🌟 <b>Luar biasa!</b> Kamu sangat menguasai penulisan rumus analisis data! Terus pertahankan!";
-  else if (nilai >= 75) feedback = "👏 <b>Bagus sekali!</b> Pemahamanmu sudah baik. Sedikit latihan lagi dan kamu bisa jadi yang terbaik!";
-  else if (nilai >= 60) feedback = "💪 <b>Sudah cukup baik!</b> Jangan menyerah, pelajari kembali bagian yang salah dan coba lagi!";
-  else feedback = "🔥 <b>Jangan patah semangat!</b> Belajar itu proses. Baca pembahasan di bawah, ulangi materi, dan coba lagi!";
-  document.getElementById('feedback-text').innerHTML = feedback;
-
-  const reviewArea = document.getElementById('review-area');
-  reviewArea.innerHTML = "";
-  soalAcak.forEach((soal, i) => {
-    const userJawab = jawabanUser[i];
-    const isCorrect = cekJawaban(userJawab || "", soal.a);
-    const isEmpty = !userJawab;
-
-    const div = document.createElement('div');
-    div.className = "review-item " + (isCorrect ? "correct" : "wrong");
+ 
