@@ -232,7 +232,7 @@
       <strong style="display:block;margin-top:12px;">⚠️ Aturan Penulisan (WAJIB):</strong>
       <ul>
         <li>Tanda <span class="warn">=</span> di depan <b>wajib ada</b></li>
-        <li>Pemisah argumen pakai <span class="warn">koma (,)</span> — titik koma (;) atau titik (.) <b>salah</b></li>
+        <li>Pemisah argumen pakai <span class="warn">koma (,)</span> atau <span class="warn">titik koma (;)</span> — titik (.) <b>salah</b></li>
         <li>Teks pakai <span class="warn">kutip ganda (")</span> — kutip tunggal (') <b>salah</b></li>
         <li><b>Tidak boleh ada spasi</b> di mana pun</li>
         <li>Huruf besar/kecil bebas (SUM = sum = Sum)</li>
@@ -304,7 +304,6 @@
 
 <script>
 // ========== BANK SOAL (25 SOAL TULIS RUMUS) ==========
-// AVERAGEIF SUDAH DIHAPUS, DIGANTI COUNTIF
 const BANK_SOAL = [
   { q: "Tuliskan rumus untuk menjumlahkan seluruh nilai dari sel A1 sampai A10.", a: ["=SUM(A1:A10)"], hint: "Gunakan fungsi SUM dengan range A1:A10", e: "Rumus yang benar: <b>=SUM(A1:A10)</b>" },
   { q: "Tuliskan rumus untuk mencari nilai rata-rata dari sel B1 sampai B20.", a: ["=AVERAGE(B1:B20)"], hint: "Gunakan fungsi AVERAGE", e: "Rumus yang benar: <b>=AVERAGE(B1:B20)</b>" },
@@ -317,7 +316,6 @@ const BANK_SOAL = [
   { q: "Tuliskan rumus untuk menghitung jumlah sel di B1 sampai B15 yang berisi kata \"Lulus\".", a: ["=COUNTIF(B1:B15,\"Lulus\")"], hint: "Gunakan COUNTIF dengan kriteria teks", e: "Rumus yang benar: <b>=COUNTIF(B1:B15,\"Lulus\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan nilai di C1 sampai C10, HANYA jika nilainya lebih dari 80.", a: ["=SUMIF(C1:C10,\">80\")", "=SUMIF(C1:C10,\">80\",C1:C10)"], hint: "SUMIF bisa dipakai 2 argumen jika range kriteria = range jumlah", e: "Rumus yang benar: <b>=SUMIF(C1:C10,\">80\")</b>" },
   { q: "Tuliskan rumus IF (2 kondisi): jika nilai di B1 lebih besar atau sama dengan 60, tampilkan \"Lulus\", jika tidak \"Tidak Lulus\".", a: ["=IF(B1>=60,\"Lulus\",\"Tidak Lulus\")"], hint: "Gunakan operator >=", e: "Rumus yang benar: <b>=IF(B1>=60,\"Lulus\",\"Tidak Lulus\")</b>" },
-  // === SOAL PENGGANTI AVERAGEIF (COUNTIF) ===
   { q: "Tuliskan rumus untuk menghitung berapa banyak siswa di B1 sampai B20 yang keterangannya \"Lulus\".", a: ["=COUNTIF(B1:B20,\"Lulus\")"], hint: "Gunakan COUNTIF dengan kriteria teks \"Lulus\"", e: "Rumus yang benar: <b>=COUNTIF(B1:B20,\"Lulus\")</b>" },
   { q: "Tuliskan rumus untuk menjumlahkan isi sel A1, A2, dan A3 (tanpa range).", a: ["=SUM(A1,A2,A3)", "=A1+A2+A3"], hint: "Bisa pakai SUM dengan koma, atau penjumlahan langsung", e: "Rumus yang benar: <b>=SUM(A1,A2,A3)</b> atau <b>=A1+A2+A3</b>" },
   { q: "Tuliskan rumus untuk mencari nilai terbesar dari A1, A2, A3, dan A4 (tanpa range).", a: ["=MAX(A1,A2,A3,A4)"], hint: "MAX bisa menerima beberapa argumen", e: "Rumus yang benar: <b>=MAX(A1,A2,A3,A4)</b>" },
@@ -346,21 +344,26 @@ let timerInterval;
 let sisaWaktu = 25 * 60;
 let waktuHabis = false;
 let sudahKirim = false;
-let sedangFeedback = false; // mencegah klik ganda saat feedback
+let sedangFeedback = false;
 
 // GANTI URL DI BAWAH INI DENGAN URL WEB APP ANDA
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3U1sTJAEyoigwyxm6y7qLon7chpuWyr0r7bKOkcqdFWUTJELApdDKRC4xounkIF3j/exec";
 
-// ========== NORMALISASI & CEK JAWABAN (VERSI KETAT) ==========
+// ========== NORMALISASI & CEK JAWABAN ==========
 // Aturan:
 //  - Huruf besar/kecil BEBAS (SUM = sum = Sum) ✅
 //  - Tanda "=" di depan WAJIB ada ❗
-//  - Pemisah argumen WAJIB koma (,). Titik koma (;) atau titik (.) = SALAH ❗
+//  - Pemisah argumen: koma (,) ATAU titik koma (;) DITERIMA
+//    Titik (.) = SALAH ❗
 //  - Teks WAJIB pakai kutip ganda ("). Kutip tunggal (') = SALAH ❗
 //  - TIDAK BOLEH ada spasi di mana pun ❗
 function normalisasi(str) {
   if (str === null || str === undefined) return "";
-  return String(str).toLowerCase();
+  // Huruf kecil semua
+  let s = String(str).toLowerCase();
+  // Titik koma (;) disamakan dengan koma (,)
+  s = s.replace(/;/g, ",");
+  return s;
 }
 
 function cekJawaban(userInput, jawabanBenar) {
@@ -388,8 +391,12 @@ function startQuiz() {
   document.getElementById('info-kelas').textContent = kelasSiswa;
   document.getElementById('info-absen').textContent = absenSiswa;
 
-  // Acak soal
-  soalAcak = [...BANK_SOAL].sort(() => Math.random() - 0.5);
+  // Acak soal (Fisher-Yates)
+  soalAcak = [...BANK_SOAL];
+  for (let i = soalAcak.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [soalAcak[i], soalAcak[j]] = [soalAcak[j], soalAcak[i]];
+  }
   jawabanUser = new Array(soalAcak.length).fill(null);
   currentIndex = 0;
   sisaWaktu = 25 * 60;
@@ -415,10 +422,9 @@ function tampilkanSoal() {
   const input = document.getElementById('answer-input');
   input.value = "";
   input.disabled = false;
-  input.className = "answer-input"; // reset warna
+  input.className = "answer-input";
   input.focus();
 
-  // reset tombol & feedback
   document.getElementById('btn-submit').disabled = false;
   document.getElementById('btn-skip').disabled = false;
   const fb = document.getElementById('quick-feedback');
@@ -444,14 +450,11 @@ function submitJawaban() {
     return;
   }
 
-  // Simpan jawaban
   jawabanUser[currentIndex] = jawaban;
 
-  // Cek benar/salah
   const soal = soalAcak[currentIndex];
   const isCorrect = cekJawaban(jawaban, soal.a);
 
-  // Tampilkan feedback warna
   sedangFeedback = true;
   input.disabled = true;
   document.getElementById('btn-submit').disabled = true;
@@ -466,13 +469,13 @@ function submitJawaban() {
   } else {
     input.classList.add('jawaban-salah');
     fb.className = "quick-feedback show wrong";
-    fb.innerHTML = "❌ <b>SALAH!</b> Perhatikan aturan: pakai <b>koma (,)</b>, <b>kutip ganda (\")</b>, ada <b>=</b>, tanpa spasi.";
+    fb.innerHTML = "❌ <b>SALAH!</b> Perhatikan aturan: pakai <b>koma (,)</b> atau <b>titik koma (;)</b>, <b>kutip ganda (\")</b>, ada <b>=</b>, tanpa spasi.";
   }
 
-  // Lanjut otomatis setelah 1.4 detik
+  // Lanjut otomatis setelah 3 detik
   setTimeout(() => {
     lanjutSoal();
-  }, 1400);
+  }, 3000);
 }
 
 function lewatiSoal() {
@@ -504,146 +507,3 @@ function mulaiTimer() {
     if (sisaWaktu <= 60) timerEl.classList.add('warning');
     if (sisaWaktu <= 0) {
       clearInterval(timerInterval);
-      waktuHabis = true;
-      selesaikanKuis();
-    }
-  }, 1000);
-}
-
-function selesaikanKuis() {
-  clearInterval(timerInterval);
-
-  let benar = 0;
-  soalAcak.forEach((soal, i) => {
-    if (cekJawaban(jawabanUser[i] || "", soal.a)) benar++;
-  });
-  const nilai = Math.round((benar / soalAcak.length) * 100);
-
-  document.getElementById('screen-quiz').classList.remove('active');
-  document.getElementById('screen-result').classList.add('active');
-
-  const circle = document.getElementById('score-circle');
-  circle.textContent = nilai;
-  circle.className = "score-circle";
-  if (nilai >= 90) circle.classList.add('score-excellent');
-  else if (nilai >= 75) circle.classList.add('score-good');
-  else if (nilai >= 60) circle.classList.add('score-fair');
-  else circle.classList.add('score-poor');
-
-  const summaryBox = document.getElementById('summary-box');
-  summaryBox.innerHTML = `
-    <div class="summary-item"><strong>${benar}</strong>Benar</div>
-    <div class="summary-item"><strong>${soalAcak.length - benar}</strong>Salah</div>
-    <div class="summary-item"><strong>${soalAcak.length}</strong>Total Soal</div>
-    <div class="summary-item"><strong>${Math.floor(sisaWaktu/60)}:${(sisaWaktu%60).toString().padStart(2,'0')}</strong>Sisa Waktu</div>
-  `;
-
-  let feedback = "";
-  if (nilai >= 90) feedback = "🌟 <b>Luar biasa!</b> Kamu sangat menguasai penulisan rumus analisis data! Terus pertahankan!";
-  else if (nilai >= 75) feedback = "👏 <b>Bagus sekali!</b> Pemahamanmu sudah baik. Sedikit latihan lagi dan kamu bisa jadi yang terbaik!";
-  else if (nilai >= 60) feedback = "💪 <b>Sudah cukup baik!</b> Jangan menyerah, pelajari kembali bagian yang salah dan coba lagi!";
-  else feedback = "🔥 <b>Jangan patah semangat!</b> Belajar itu proses. Baca pembahasan di bawah, ulangi materi, dan coba lagi!";
-  document.getElementById('feedback-text').innerHTML = feedback;
-
-  const reviewArea = document.getElementById('review-area');
-  reviewArea.innerHTML = "";
-  soalAcak.forEach((soal, i) => {
-    const userJawab = jawabanUser[i];
-    const isCorrect = cekJawaban(userJawab || "", soal.a);
-    const isEmpty = !userJawab;
-
-    const div = document.createElement('div');
-    div.className = "review-item " + (isCorrect ? "correct" : "wrong");
-
-    const badge = isCorrect
-      ? `<span class="review-badge correct">✅ BENAR</span>`
-      : `<span class="review-badge wrong">❌ SALAH</span>`;
-
-    const userAnsHtml = isEmpty
-      ? `<span class="review-answer empty-ans">(tidak dijawab)</span>`
-      : `<span class="review-answer ${isCorrect?'correct-ans':'wrong-ans'}">${escapeHtml(userJawab)}</span>`;
-
-    const keyHtml = `<span class="review-answer correct-ans">${escapeHtml(soal.a[0])}</span>`;
-
-    div.innerHTML = `
-      ${badge}
-      <div class="review-q">${i+1}. ${soal.q}</div>
-      <div class="review-row">
-        <span class="review-label">Jawabanmu:</span>
-        ${userAnsHtml}
-      </div>
-      ${!isCorrect ? `<div class="review-row"><span class="review-label">Kunci jawaban:</span>${keyHtml}</div>` : ''}
-      <div class="review-explanation">💡 ${soal.e}</div>
-    `;
-    reviewArea.appendChild(div);
-  });
-
-  kirimKeSheet(benar, nilai);
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// ========== KIRIM KE GOOGLE SHEETS (FORM HIDDEN SUBMIT) ==========
-function kirimKeSheet(benar, nilai) {
-  const statusEl = document.getElementById('send-status');
-  statusEl.style.display = 'block';
-
-  if (sudahKirim) {
-    statusEl.className = 'send-status success';
-    statusEl.textContent = '✅ Nilai sudah terkirim sebelumnya.';
-    return;
-  }
-  sudahKirim = true;
-
-  if (!WEB_APP_URL || WEB_APP_URL === "MASUKKAN_URL") {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '❌ URL Google Apps Script belum diatur.';
-    return;
-  }
-
-  statusEl.className = 'send-status sending';
-  statusEl.textContent = '⏳ Mengirim nilai ke sistem guru...';
-
-  const payload = {
-    nama: namaSiswa,
-    absen: absenSiswa,
-    kelas: kelasSiswa,
-    nilai: nilai,
-    benar: benar,
-    total: soalAcak.length
-  };
-
-  try {
-    const form = document.getElementById('google-form');
-    form.action = WEB_APP_URL;
-    form.innerHTML = '';
-
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'postData';
-    input.value = JSON.stringify(payload);
-    form.appendChild(input);
-
-    form.submit();
-
-    setTimeout(() => {
-      statusEl.className = 'send-status success';
-      statusEl.textContent = '✅ Nilai berhasil terkirim ke sistem guru!';
-    }, 1500);
-
-  } catch (err) {
-    statusEl.className = 'send-status error';
-    statusEl.textContent = '❌ Gagal mengirim data. Hubungi guru Anda.';
-    sudahKirim = false;
-  }
-}
-</script>
-</body>
-</html>
