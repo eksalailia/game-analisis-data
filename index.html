@@ -507,3 +507,146 @@ function mulaiTimer() {
     if (sisaWaktu <= 60) timerEl.classList.add('warning');
     if (sisaWaktu <= 0) {
       clearInterval(timerInterval);
+      waktuHabis = true;
+      selesaikanKuis();
+    }
+  }, 1000);
+}
+
+function selesaikanKuis() {
+  clearInterval(timerInterval);
+
+  let benar = 0;
+  soalAcak.forEach((soal, i) => {
+    if (cekJawaban(jawabanUser[i] || "", soal.a)) benar++;
+  });
+  const nilai = Math.round((benar / soalAcak.length) * 100);
+
+  document.getElementById('screen-quiz').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+
+  const circle = document.getElementById('score-circle');
+  circle.textContent = nilai;
+  circle.className = "score-circle";
+  if (nilai >= 90) circle.classList.add('score-excellent');
+  else if (nilai >= 75) circle.classList.add('score-good');
+  else if (nilai >= 60) circle.classList.add('score-fair');
+  else circle.classList.add('score-poor');
+
+  const summaryBox = document.getElementById('summary-box');
+  summaryBox.innerHTML = `
+    <div class="summary-item"><strong>${benar}</strong>Benar</div>
+    <div class="summary-item"><strong>${soalAcak.length - benar}</strong>Salah</div>
+    <div class="summary-item"><strong>${soalAcak.length}</strong>Total Soal</div>
+    <div class="summary-item"><strong>${Math.floor(sisaWaktu/60)}:${(sisaWaktu%60).toString().padStart(2,'0')}</strong>Sisa Waktu</div>
+  `;
+
+  let feedback = "";
+  if (nilai >= 90) feedback = "🌟 <b>Luar biasa!</b> Kamu sangat menguasai penulisan rumus analisis data! Terus pertahankan!";
+  else if (nilai >= 75) feedback = "👏 <b>Bagus sekali!</b> Pemahamanmu sudah baik. Sedikit latihan lagi dan kamu bisa jadi yang terbaik!";
+  else if (nilai >= 60) feedback = "💪 <b>Sudah cukup baik!</b> Jangan menyerah, pelajari kembali bagian yang salah dan coba lagi!";
+  else feedback = "🔥 <b>Jangan patah semangat!</b> Belajar itu proses. Baca pembahasan di bawah, ulangi materi, dan coba lagi!";
+  document.getElementById('feedback-text').innerHTML = feedback;
+
+  const reviewArea = document.getElementById('review-area');
+  reviewArea.innerHTML = "";
+  soalAcak.forEach((soal, i) => {
+    const userJawab = jawabanUser[i];
+    const isCorrect = cekJawaban(userJawab || "", soal.a);
+    const isEmpty = !userJawab;
+
+    const div = document.createElement('div');
+    div.className = "review-item " + (isCorrect ? "correct" : "wrong");
+
+    const badge = isCorrect
+      ? `<span class="review-badge correct">✅ BENAR</span>`
+      : `<span class="review-badge wrong">❌ SALAH</span>`;
+
+    const userAnsHtml = isEmpty
+      ? `<span class="review-answer empty-ans">(tidak dijawab)</span>`
+      : `<span class="review-answer ${isCorrect?'correct-ans':'wrong-ans'}">${escapeHtml(userJawab)}</span>`;
+
+    const keyHtml = `<span class="review-answer correct-ans">${escapeHtml(soal.a[0])}</span>`;
+
+    div.innerHTML = `
+      ${badge}
+      <div class="review-q">${i+1}. ${soal.q}</div>
+      <div class="review-row">
+        <span class="review-label">Jawabanmu:</span>
+        ${userAnsHtml}
+      </div>
+      ${!isCorrect ? `<div class="review-row"><span class="review-label">Kunci jawaban:</span>${keyHtml}</div>` : ''}
+      <div class="review-explanation">💡 ${soal.e}</div>
+    `;
+    reviewArea.appendChild(div);
+  });
+
+  kirimKeSheet(benar, nilai);
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ========== KIRIM KE GOOGLE SHEETS ==========
+function kirimKeSheet(benar, nilai) {
+  const statusEl = document.getElementById('send-status');
+  statusEl.style.display = 'block';
+
+  if (sudahKirim) {
+    statusEl.className = 'send-status success';
+    statusEl.textContent = '✅ Nilai sudah terkirim sebelumnya.';
+    return;
+  }
+  sudahKirim = true;
+
+  if (!WEB_APP_URL || WEB_APP_URL === "MASUKKAN_URL") {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '❌ URL Google Apps Script belum diatur.';
+    return;
+  }
+
+  statusEl.className = 'send-status sending';
+  statusEl.textContent = '⏳ Mengirim nilai ke sistem guru...';
+
+  const payload = {
+    nama: namaSiswa,
+    absen: absenSiswa,
+    kelas: kelasSiswa,
+    nilai: nilai,
+    benar: benar,
+    total: soalAcak.length
+  };
+
+  try {
+    const form = document.getElementById('google-form');
+    form.action = WEB_APP_URL;
+    form.innerHTML = '';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'postData';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    form.submit();
+
+    setTimeout(() => {
+      statusEl.className = 'send-status success';
+      statusEl.textContent = '✅ Nilai berhasil terkirim ke sistem guru!';
+    }, 1500);
+
+  } catch (err) {
+    statusEl.className = 'send-status error';
+    statusEl.textContent = '❌ Gagal mengirim data. Hubungi guru Anda.';
+    sudahKirim = false;
+  }
+}
+</script>
+</body>
+</html>
